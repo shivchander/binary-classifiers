@@ -7,9 +7,12 @@ This is a python implementation of kNN classifier on a Stressed/Not Stressed dat
 '''
 
 import re
+import numpy as np
+from sklearn.model_selection import train_test_split
 from knn import KNN
 from neighborhood import NeighborhoodClassifier
 import matplotlib.pyplot as plt
+from perceptron import Perceptron
 
 
 def parse_reformat(txt_file):
@@ -30,6 +33,26 @@ def parse_reformat(txt_file):
                 y.append(label)
 
     return X, y
+
+
+# Find the min and max values for each column
+def dataset_minmax(X):
+    minmax = list()
+    for i in range(len(X[0])):
+        col_values = [row[i] for row in X]
+        value_min = min(col_values)
+        value_max = max(col_values)
+        minmax.append([value_min, value_max])
+    return minmax
+
+
+# Rescale dataset columns to the range 0-1
+def normalize_dataset(X):
+    minmax = dataset_minmax(X)
+    for row in X:
+        for i in range(len(row)):
+            row[i] = (row[i] - minmax[i][0]) / (minmax[i][1] - minmax[i][0])
+    return X
 
 
 def balanced_acc(y_true, y_pred):
@@ -53,7 +76,7 @@ def balanced_acc(y_true, y_pred):
     specificity = tn / (fp + tn)
     balanced_acc = (sensitivity + specificity) / 2
 
-    return balanced_acc
+    return round(balanced_acc, 3)
 
 
 def classifier(X, y, neighbor_param, classifier_type='knn'):
@@ -109,9 +132,18 @@ def q1(X, y):
     plt.clf()
 
 
+def q2(X, y):
+    X = np.array(normalize_dataset(X))
+    # X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+    model = Perceptron()
+    model.fit(X, y, alpha=0.001, weight_init='random', epochs=200, verbose=True, do_plot=True)
+
+
 if __name__ == '__main__':
     X, y = parse_reformat('data/HW2_data.txt')
-    q1(X, y)
+    # q1(X, y)
+    # q2(X, y)
+
 
 
 
