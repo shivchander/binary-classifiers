@@ -3,12 +3,11 @@ __author__ = "Shivchander Sudalairaj"
 __license__ = "MIT"
 
 '''
-This is a python implementation of kNN classifier on a Stressed/Not Stressed dataset 
+ Binary classification of Stressed/Not Stressed dataset using kNN, Neighborhood and Perceptron 
 '''
 
 import re
 import numpy as np
-from sklearn.model_selection import train_test_split
 from knn import KNN
 from neighborhood import NeighborhoodClassifier
 import matplotlib.pyplot as plt
@@ -134,7 +133,6 @@ def q1(X, y):
 
 def q2(X, y):
     X = np.array(normalize_dataset(X))
-    # X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
     model = Perceptron()
     model.fit(X, y, alpha=0.001, weight_init='random', epochs=200, verbose=True, do_plot=True)
 
@@ -142,7 +140,7 @@ def q2(X, y):
 if __name__ == '__main__':
     X, y = parse_reformat('data/HW2_data.txt')
     # q1(X, y)
-    # q2(X, y)
+    q2(X, y)
 
 
 

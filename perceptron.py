@@ -6,9 +6,32 @@ __license__ = "MIT"
 Perceptron classifier
 '''
 import numpy as np
-from sklearn.model_selection import train_test_split
+import pandas as pd
 import matplotlib.pyplot as plt
 np.random.seed(0)
+
+
+def train_test_split(X, y, test_size):
+
+    df = pd.DataFrame(X, columns=['P', 'N'])
+    df['label'] = y
+    # Shuffle dataset
+    shuffle_df = df.sample(frac=1)
+
+    # Define a size for your train set
+    train_size = int((1-test_size) * len(df))
+
+    # Split your dataset
+    train_set = shuffle_df[:train_size]
+    test_set = shuffle_df[train_size:]
+
+    X_train = train_set.to_numpy()[:, 0:-1]
+    y_train = train_set.to_numpy()[:, -1]
+    X_test = test_set.to_numpy()[:, 0:-1]
+    y_test = test_set.to_numpy()[:, -1]
+
+    return X_train, X_test, y_train, y_test
+
 
 def balanced_acc(y_true, y_pred):
 
@@ -50,7 +73,7 @@ class Perceptron:
             epoch_checkpoint=5, verbose=True, do_plot=True):
 
         # train-validation split
-        X_train, X_val, y_train, y_val = train_test_split(X, y, test_size= validation_split, random_state=42)
+        X_train, X_val, y_train, y_val = train_test_split(X, y, test_size= validation_split)
 
         # weight initialization
         if weight_init == 'random':
