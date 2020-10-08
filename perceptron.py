@@ -11,6 +11,26 @@ import matplotlib.pyplot as plt
 np.random.seed(0)
 
 
+# Find the min and max values for each column
+def dataset_minmax(dataset):
+    minmax = list()
+    for i in range(len(dataset[0])):
+        col_values = [row[i] for row in dataset]
+        value_min = min(col_values)
+        value_max = max(col_values)
+        minmax.append([value_min, value_max])
+    return minmax
+
+
+# Rescale dataset columns to the range 0-1
+def normalize_dataset(dataset):
+    minmax = dataset_minmax(dataset)
+    for row in dataset:
+        for i in range(len(row)):
+            row[i] = (row[i] - minmax[i][0]) / (minmax[i][1] - minmax[i][0])
+    return dataset
+
+
 def train_test_split(X, y, test_size):
 
     df = pd.DataFrame(X, columns=['P', 'N'])
@@ -64,16 +84,24 @@ class Perceptron:
 
     def predict(self, X):
         y_pred = []
+        X = normalize_dataset(X)
         for x in X:
             y_pred.append(self.threshold_function(x))
 
         return y_pred
 
-    def fit(self, X, y, epochs=100, alpha=0.1, validation_split=0.2, weight_init='random',
-            epoch_checkpoint=5, verbose=True, do_plot=True):
+    def fit(self, X, y, epochs=100, alpha=0.1, validation_split=0.2, weight_init='random',epoch_checkpoint=5,
+            verbose=True, do_plot=True, do_validation=True, normalize=True, training_error_track=False):
 
-        # train-validation split
-        X_train, X_val, y_train, y_val = train_test_split(X, y, test_size= validation_split)
+        if normalize:
+            X = np.array(normalize_dataset(X))
+
+        if do_validation:
+            # train-validation split
+            X_train, X_val, y_train, y_val = train_test_split(X, y, test_size= validation_split)
+        else:
+            X_train = X
+            y_train = y
 
         # weight initialization
         if weight_init == 'random':
@@ -83,7 +111,7 @@ class Perceptron:
         if weight_init == 'ones':
             self.w = np.ones(X.shape[1])
 
-        self.b = 0
+        self.b = 0                                  # initializing bias to 0
         weights_history = []
         bias_history = []
         train_errors = {}
@@ -99,25 +127,36 @@ class Perceptron:
             weights_history.append(self.w)
             bias_history.append(self.b)
 
-            if i % epoch_checkpoint == 0:        # checkpoint to track error
-                _y_train_preds = self.predict(X_train)
-                _y_val_preds = self.predict(X_val)
-                train_err_i = 1 - balanced_acc(y_train, _y_train_preds)
-                val_err_i = 1 - balanced_acc(y_val, _y_val_preds)
-                train_errors[i] = train_err_i
-                val_errors[i] = val_err_i
+            if do_validation:
+                if i % epoch_checkpoint == 0:        # checkpoint to track error
+                    _y_train_preds = self.predict(X_train)
+                    _y_val_preds = self.predict(X_val)
+                    train_err_i = 1 - balanced_acc(y_train, _y_train_preds)
+                    val_err_i = 1 - balanced_acc(y_val, _y_val_preds)
+                    train_errors[i] = train_err_i
+                    val_errors[i] = val_err_i
 
-                if verbose:
-                    print("Epoch %d: \n\t Training Error: %0.3f \t Validation Error: %0.3f"%(i, train_err_i,
-                                                                                                   val_err_i))
+                    if verbose:
+                        print("Epoch %d: \n\t Training Error: %0.3f \t Validation Error: %0.3f"%(i, train_err_i,
+                                                                                                       val_err_i))
 
-        if do_plot:
-            plt.plot(list(train_errors.keys()), list(train_errors.values()), label='E_train')
-            plt.plot(list(val_errors.keys()), list(val_errors.values()), label='E_test')
-            plt.xlabel('epochs')
-            plt.ylabel('Error (1- balanced acc')
-            plt.title('Training and Test Error of Perceptron with epochs')
-            plt.legend(loc="upper left")
-            # plt.xticks(list(train_errors.keys()))
-            plt.savefig('figs/perceptron.pdf')
-            plt.clf()
+            if training_error_track:
+                if i % epoch_checkpoint == 0:
+                    _y_preds = self.predict(X_train)
+                    train_err_i = 1 - balanced_acc(y_train, _y_preds)
+                    train_errors[i] = train_err_i
+
+        if do_validation:
+            if do_plot:
+                plt.plot(list(train_errors.keys()), list(train_errors.values()), label='E_train')
+                plt.plot(list(val_errors.keys()), list(val_errors.values()), label='E_test')
+                plt.xlabel('epochs')
+                plt.ylabel('Error (1- balanced acc')
+                plt.title('Training and Test Error of Perceptron with epochs')
+                plt.legend(loc="upper left")
+                # plt.xticks(list(train_errors.keys()))
+                plt.savefig('figs/perceptron.pdf')
+                plt.clf()
+
+        if training_error_track:
+            return train_errors
