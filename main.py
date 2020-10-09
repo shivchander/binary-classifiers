@@ -359,9 +359,3 @@ if __name__ == '__main__':
     q1(X, y)
     q2(X, y)
     print("--- %s seconds ---" % (time.time() - start_time))
-
-
-
-
-
-
